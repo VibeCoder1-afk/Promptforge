@@ -294,15 +294,6 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 ## Screenshots
 
-_Add screenshots here once deployed — the editor, model comparison view, and analytics dashboard are the most worth showing off._
-
-```
-docs/screenshots/editor.png
-docs/screenshots/compare-models.png
-docs/screenshots/analytics.png
-```
-
----
 
 ## Future Improvements
 
