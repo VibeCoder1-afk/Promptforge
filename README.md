@@ -2,32 +2,19 @@
 
 A platform for designing, testing, versioning, and evaluating LLM prompts across multiple AI models — with analytics, cost tracking, and performance metrics.
 
-Think of it as **GitHub + Postman + Vercel for prompts.**
-
 ![status](https://img.shields.io/badge/status-MVP-7C5CFF) ![node](https://img.shields.io/badge/node-%3E%3D18-4ADE80) ![license](https://img.shields.io/badge/license-MIT-8B92A5)
 
 ---
 
-## Problem Statement
+## Why I built this
 
-Teams that build with LLMs end up managing prompts the way developers managed code before version control existed: pasted in docs, overwritten in place, no history of what changed or why a change made outputs worse. There's no easy way to know:
+Teams that build with LLMs end up managing prompts the way developers managed code before version control existed: pasted into docs, overwritten in place, no history of what changed or why a change made outputs worse. There's no easy way to know which version of a prompt is live, whether GPT-4.1, Gemini, or Claude handles it best, what it costs to run at scale, or whether an "improved" prompt is actually more consistent — or just felt better once.
 
-- Which version of a prompt is actually live
-- Whether GPT-4.1, Gemini, or Claude handles it best
-- What a prompt costs to run at scale, or how its latency trends over time
-- Whether the "improved" prompt is actually more consistent, or just felt better once
-
-PromptForge gives prompts the same tooling code already has: versioning with diffs and rollback, a place to test variables (`{{like_this}}`), side-by-side model comparison, A/B testing, and dashboards for cost, latency, and quality — all in one workspace, with a public gallery for reusable templates.
+PromptForge gives prompts the same tooling code already has: versioning with diffs and rollback, a place to test variables (`{{like_this}}`), side-by-side model comparison, A/B testing, and dashboards for cost, latency, and quality — plus a public gallery for reusable templates.
 
 ---
 
-## Elevator Pitch
-
-A full-stack platform for creating, versioning, and evaluating LLM prompts across multiple AI models, with analytics, cost tracking, and performance metrics baked in from day one.
-
----
-
-## Architecture Diagram
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -61,7 +48,7 @@ flowchart LR
     Eval --> Claude
 ```
 
-**Request flow for a single evaluation:** the editor renders `{{variables}}` into the saved prompt version → the backend calls the chosen provider's API → the response, token usage, latency, and cost are stored as an `Evaluation` document → the dashboard aggregates those documents into stats.
+For a single evaluation: the editor renders `{{variables}}` into the saved prompt version → the backend calls the chosen provider's API → the response, token usage, latency, and cost get stored as an `Evaluation` document → the dashboard aggregates those into stats.
 
 ---
 
@@ -126,15 +113,16 @@ erDiagram
 
 ---
 
-## API Documentation
+## API
 
-Base URL: `http://localhost:5000/api` (dev) — all routes except `/auth/register`, `/auth/login`, and `GET /gallery` require `Authorization: Bearer <token>`.
+Base URL: `http://localhost:5000/api` (dev). All routes except `/auth/register`, `/auth/login`, `/auth/demo`, and `GET /gallery` require `Authorization: Bearer <token>`.
 
 ### Auth
 | Method | Route | Description |
 |---|---|---|
 | POST | `/auth/register` | Create an account — `{ name, email, password }` |
 | POST | `/auth/login` | Log in — `{ email, password }` → `{ token, user }` |
+| POST | `/auth/demo` | Demo login — creates the demo account on first call if it doesn't exist yet, then logs in |
 | GET | `/auth/me` | Current user |
 
 ### Prompts & Versions
@@ -203,7 +191,7 @@ promptforge/
 ├── frontend/
 │   ├── src/
 │   │   ├── pages/                     # Login, Register, Workspace, PromptEditor, Analytics, Gallery, TeamWorkspace, Favorites, Search
-│   │   ├── components/                # Sidebar, Layout, VariablesPanel, VersionControlPanel, ModelComparePanel, ABTestPanel, EvaluationCard, ExportMenu, PromptCard
+│   │   ├── components/                # Sidebar, Layout, VariablesPanel, VersionControlPanel, ModelComparePanel, ABTestPanel, EvaluationCard, ExportMenu, PromptCard, Toast
 │   │   ├── context/AuthContext.tsx
 │   │   ├── lib/api.ts                 # Axios client + shared types
 │   │   └── App.tsx / main.tsx
@@ -221,7 +209,7 @@ promptforge/
 
 **Frontend:** React, TypeScript, Tailwind CSS, React Query, React Router, Recharts, lucide-react
 **Backend:** Node.js, Express, MongoDB (Mongoose), JWT, express-rate-limit, PDFKit
-**AI:** OpenAI API, Google Gemini API, Anthropic Claude API — each provider is optional; if a key is missing, that provider runs in a clearly-labeled mock mode so the app is fully demoable before you add billing.
+**AI:** OpenAI API, Google Gemini API, Anthropic Claude API — each provider is optional; if a key is missing, that provider runs in mock mode so the app is demoable without billing set up.
 
 ---
 
@@ -236,7 +224,7 @@ promptforge/
 cd backend
 cp .env.example .env       # fill in MONGO_URI, JWT_SECRET, and any AI provider keys you have
 npm install
-npm run seed                # optional: creates demo@promptforge.dev / demo1234 with a sample prompt
+npm run seed                # optional: adds a sample prompt to the demo account (the account itself is auto-created on first demo login)
 npm run dev
 ```
 
@@ -260,58 +248,24 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 ---
 
-## Deployment (GitHub → Live)
+## Deployment
 
-1. **Push to GitHub**
-   ```bash
-   cd promptforge
-   git init
-   git add .
-   git commit -m "Initial commit: PromptForge"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/promptforge.git
-   git push -u origin main
-   ```
+1. **Database — MongoDB Atlas**: create a free cluster, add a database user, whitelist your IP (or `0.0.0.0/0` for simplicity during setup), and copy the connection string into `MONGO_URI`.
+2. **Backend — Render** (or Railway/Fly.io): new Web Service → root directory `backend` → build command `npm install`, start command `npm start` → add env vars `MONGO_URI`, `JWT_SECRET`, `CLIENT_URL`, and any AI keys. A `render.yaml` blueprint is included at the repo root.
+3. **Frontend — Vercel**: new project → root directory `frontend` → framework preset Vite → env var `VITE_API_URL` = your Render backend URL + `/api`.
+4. Update the backend's `CLIENT_URL` to the live Vercel URL (for CORS) and redeploy.
 
-2. **Database — MongoDB Atlas**
-   Create a free cluster at mongodb.com/atlas, add a database user, allow access from anywhere (0.0.0.0/0) for simplicity, and copy the connection string into `MONGO_URI`.
-
-3. **Backend — Render** (or Railway/Fly.io)
-   - New Web Service → connect your GitHub repo → root directory `backend`
-   - Build command `npm install`, start command `npm start`
-   - Add env vars: `MONGO_URI`, `JWT_SECRET`, `CLIENT_URL` (your Vercel URL once you have it), and any AI keys
-   - A `render.yaml` blueprint is included at the repo root for one-click setup
-
-4. **Frontend — Vercel**
-   - New Project → import the repo → root directory `frontend`
-   - Framework preset: Vite
-   - Add env var `VITE_API_URL` = your Render backend URL + `/api`
-   - Deploy
-
-5. Update the backend's `CLIENT_URL` env var to your live Vercel URL (for CORS), and redeploy the backend.
+*Not deployed yet — link and screenshots go here once it's live.*
 
 ---
 
-## Screenshots
+## Known limitations / what's next
 
-_Add screenshots here once deployed — the editor, model comparison view, and analytics dashboard are the most worth showing off._
-
-```
-docs/screenshots/editor.png
-docs/screenshots/compare-models.png
-docs/screenshots/analytics.png
-```
-
----
-
-## Future Improvements
-
-- Redis-backed caching for repeated evaluations and rate limiting at scale
-- Function-calling schema builder (define tool signatures visually, not just a toggle)
-- Team-level roles and permissions (owner/editor/viewer) instead of flat membership
-- Streaming responses in the editor instead of waiting for full completions
-- Prompt Score upgraded from static heuristics to an LLM-as-judge pipeline
-- Webhooks / API keys so PromptForge prompts can be called from external apps directly
+- No Redis, so repeated evaluations and rate limiting aren't cached — fine at this scale, would matter for real traffic.
+- Function calling is a toggle, not a schema builder — you can't define tool signatures visually yet.
+- Team roles are flat membership only, no owner/editor/viewer distinction.
+- Evaluation runs wait for full completions rather than streaming.
+- Prompt Score is heuristic-based, not an LLM-as-judge.
 
 ---
 
