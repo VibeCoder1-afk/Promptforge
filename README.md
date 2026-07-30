@@ -8,7 +8,7 @@ A platform for designing, testing, versioning, and evaluating LLM prompts across
 
 ## Why I built this
 
-Teams that build with LLMs end up managing prompts the way developers managed code before version control existed: pasted into docs, overwritten in place, no history of what changed or why a change made outputs worse. There's no easy way to know which version of a prompt is live, whether GPT-4.1, Gemini, or Claude handles it best, what it costs to run at scale, or whether an "improved" prompt is actually more consistent — or just felt better once.
+Teams that build with LLMs end up managing prompts the way developers managed code before version control existed: pasted into docs, overwritten in place, no history of what changed or why a change made outputs worse. There's no easy way to know which version of a prompt is live, whether Mistral, Grok, or Gemini 3.5 Flash handles it best, what it costs to run at scale, or whether an "improved" prompt is actually more consistent — or just felt better once.
 
 PromptForge gives prompts the same tooling code already has: versioning with diffs and rollback, a place to test variables (`{{like_this}}`), side-by-side model comparison, A/B testing, and dashboards for cost, latency, and quality — plus a public gallery for reusable templates.
 
@@ -31,9 +31,9 @@ flowchart LR
     end
 
     subgraph Providers["AI Providers"]
-        OpenAI[OpenAI API]
-        Gemini[Google Gemini API]
-        Claude[Anthropic Claude API]
+        Mistral[Mistral API]
+        Grok[xAI Grok API]
+        Gemini[Google Gemini 3.5 Flash API]
     end
 
     DB[(MongoDB)]
@@ -43,9 +43,9 @@ flowchart LR
     Eval --> DB
     Analytics --> DB
     Gallery --> DB
-    Eval --> OpenAI
+    Eval --> Mistral
+    Eval --> Grok
     Eval --> Gemini
-    Eval --> Claude
 ```
 
 For a single evaluation: the editor renders `{{variables}}` into the saved prompt version → the backend calls the chosen provider's API → the response, token usage, latency, and cost get stored as an `Evaluation` document → the dashboard aggregates those into stats.
@@ -180,7 +180,7 @@ promptforge/
 │   │   ├── config/db.js               # Mongo connection
 │   │   ├── models/                    # User, Team, Collection, Prompt, PromptVersion, Evaluation
 │   │   ├── middleware/auth.js         # JWT guard
-│   │   ├── services/aiProviders.js    # OpenAI / Gemini / Claude adapter + cost calc + prompt scoring
+│   │   ├── services/aiProviders.js    # Mistral / Grok / Gemini 3.5 Flash adapter + cost calc + prompt scoring
 │   │   ├── controllers/               # Business logic per resource
 │   │   ├── routes/                    # Express routers, mounted in server.js
 │   │   ├── utils/seed.js              # Demo user + sample prompt
@@ -209,7 +209,7 @@ promptforge/
 
 **Frontend:** React, TypeScript, Tailwind CSS, React Query, React Router, Recharts, lucide-react
 **Backend:** Node.js, Express, MongoDB (Mongoose), JWT, express-rate-limit, PDFKit
-**AI:** OpenAI API, Google Gemini API, Anthropic Claude API — each provider is optional; if a key is missing, that provider runs in mock mode so the app is demoable without billing set up.
+**AI:** Mistral API, xAI Grok API, Google Gemini 3.5 Flash API — each provider is optional; if a key is missing, that provider runs in mock mode so the app is demoable without billing set up.
 
 ---
 
@@ -241,9 +241,9 @@ Visit `http://localhost:5173`.
 ### Adding real AI provider keys
 Add any of these to `backend/.env` — only the ones you set are called live, the rest fall back to mock output:
 ```
-OPENAI_API_KEY=sk-...
+MISTRAL_API_KEY=...
+GROK_API_KEY=...
 GEMINI_API_KEY=...
-ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ---
