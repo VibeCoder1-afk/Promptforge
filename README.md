@@ -2,8 +2,6 @@
 
 A platform for designing, testing, versioning, and evaluating LLM prompts across multiple AI models — with analytics, cost tracking, and performance metrics.
 
-![status](https://img.shields.io/badge/status-MVP-7C5CFF) ![node](https://img.shields.io/badge/node-%3E%3D18-4ADE80) ![license](https://img.shields.io/badge/license-MIT-8B92A5)
-
 ---
 
 ## Why I built this
